@@ -1056,7 +1056,7 @@ void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32
                     sDekuJointTable[1] = jointTable[1];
                     SkelAnime_DrawFlexLod(play, dekuSkeleton, sDekuJointTable,
                                           header->dListCount, NULL, NULL,
-                                          GET_PLAYER(play), lod);
+                                          (Actor*)GET_PLAYER(play), lod);
                     canDraw = 1;
                 }
             }
