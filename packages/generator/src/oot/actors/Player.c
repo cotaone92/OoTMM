@@ -36,6 +36,7 @@ static PlayState* sDekuFormPlay;
 static Player* sDekuFormPlayer;
 static s16 sDekuFormSceneId;
 static u8 sDekuFormActive;
+static void* Player_GetDekuObject(PlayState* play);
 
 void OotDekuForm_Reset(void)
 {
@@ -92,8 +93,13 @@ static void OotDekuForm_HandleInput(PlayState* play, Player* player, Input* inpu
         Player_UsingItem(player) || player->rideActor != NULL)
         return;
 
-    input->press.button &= ~L_TRIG;
     nextForm = OotDekuForm_IsActive(play, player) ? OOT_PLAYER_FORM_HUMAN : OOT_PLAYER_FORM_DEKU;
+
+    /* Do not enter a form whose custom object could not be resolved/loaded. */
+    if (nextForm == OOT_PLAYER_FORM_DEKU && !Player_GetDekuObject(play))
+        return;
+
+    input->press.button &= ~L_TRIG;
     OotDekuForm_Set(play, player, nextForm);
 }
 
