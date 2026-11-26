@@ -1048,7 +1048,7 @@ void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32
             void** dekuSkeleton;
             int canDraw = 0;
 
-            gSegments[6] = (u32)object - K0BASE;
+            gSegments[6] = (u32)object - 0x80000000;
             OPEN_DISPS(play->state.gfxCtx);
             gSPSegment(POLY_OPA_DISP++, 0x06, (void*)((u32)object));
             gSPSegment(POLY_XLU_DISP++, 0x06, (void*)((u32)object));
@@ -1074,8 +1074,8 @@ void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32
 
             gSegments[6] = previousSegment;
             OPEN_DISPS(play->state.gfxCtx);
-            gSPSegment(POLY_OPA_DISP++, 0x06, (void*)(previousSegment + K0BASE));
-            gSPSegment(POLY_XLU_DISP++, 0x06, (void*)(previousSegment + K0BASE));
+            gSPSegment(POLY_OPA_DISP++, 0x06, (void*)(previousSegment + 0x80000000));
+            gSPSegment(POLY_XLU_DISP++, 0x06, (void*)(previousSegment + 0x80000000));
             CLOSE_DISPS();
 
             if (canDraw)
