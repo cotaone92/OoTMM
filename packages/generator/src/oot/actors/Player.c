@@ -34,21 +34,24 @@ static s32 sKamaroInputValid;
 
 static PlayState* sDekuFormPlay;
 static Player* sDekuFormPlayer;
+static s16 sDekuFormSceneId;
 static u8 sDekuFormActive;
 
 void OotDekuForm_Reset(void)
 {
     sDekuFormPlay = NULL;
     sDekuFormPlayer = NULL;
+    sDekuFormSceneId = -1;
     sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
 }
 
 static void OotDekuForm_Bind(PlayState* play, Player* player)
 {
-    if (sDekuFormPlay != play || sDekuFormPlayer != player)
+    if (sDekuFormPlay != play || sDekuFormPlayer != player || sDekuFormSceneId != play->sceneId)
     {
         sDekuFormPlay = play;
         sDekuFormPlayer = player;
+        sDekuFormSceneId = play->sceneId;
         sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
     }
 }
