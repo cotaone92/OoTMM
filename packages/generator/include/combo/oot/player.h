@@ -4,6 +4,13 @@
 #include <ultra64.h>
 #include <combo/actor.h>
 
+struct PlayState;
+struct Player;
+
+void OotDekuForm_Reset(void);
+int OotDekuForm_IsActive(struct PlayState* play, struct Player* player);
+int OotDekuForm_Set(struct PlayState* play, struct Player* player, u8 form);
+
 #define PLAYER_STATE1_0 (1 << 0)
 #define PLAYER_STATE1_SWINGING_BOTTLE (1 << 1) // Bottle is swung; Bottle is active and can catch things
 #define PLAYER_STATE1_2 (1 << 2)
