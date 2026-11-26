@@ -79,6 +79,24 @@ int OotDekuForm_Set(PlayState* play, Player* player, u8 form)
     return 1;
 }
 
+/* L is unused by the OoT item layout; reserve it as the prototype form toggle. */
+static void OotDekuForm_HandleInput(PlayState* play, Player* player, Input* input)
+{
+    u8 nextForm;
+
+    if (!play || !player || !input)
+        return;
+    if (!(input->press.button & L_TRIG))
+        return;
+    if ((player->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) ||
+        Player_UsingItem(player) || player->rideActor != NULL)
+        return;
+
+    input->press.button &= ~L_TRIG;
+    nextForm = OotDekuForm_IsActive(play, player) ? OOT_PLAYER_FORM_HUMAN : OOT_PLAYER_FORM_DEKU;
+    OotDekuForm_Set(play, player, nextForm);
+}
+
 void* Player_AllocObjectBuffer(u32 size)
 {
     static void* sBuffer;
@@ -489,6 +507,7 @@ void Player_UpdateWrapper(Player* this, PlayState* play)
     sKamaroInputValid = 0;
     Player_Update(this, play);
     input = *(Input**)(OverlayAddr(0x80856734));
+    OotDekuForm_HandleInput(play, this, input);
     kamaroInput = sKamaroInputValid ? &sKamaroInput : input;
     if (!(this->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) && !Player_UsingItem(this) && GET_PLAYER(play)->rideActor == NULL)
     {
