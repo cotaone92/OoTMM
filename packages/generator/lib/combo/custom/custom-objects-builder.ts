@@ -540,13 +540,27 @@ export class CustomObjectsBuilder {
   private async makeDekuLink(): Promise<CustomObject> {
     const editor = new ObjectEditor(0x06);
     const obj = await this.getFile('mm', 'objects/object_link_nuts');
+
+    /* The XML source places gLinkDekuSkel at 0xBA24 in segment 6. */
+    const skeletonOffset = 0x0ba24;
+    const skeletonHeaderSize = 0x0c;
+    if (obj.length < skeletonOffset + skeletonHeaderSize) {
+      throw new Error(
+          `Majora's Mask object_link_nuts is truncated: expected at least 0x${(skeletonOffset + skeletonHeaderSize).toString(16)} bytes, got 0x${obj.length.toString(16)}`
+      );
+    }
+
     editor.loadSegment(0x06, obj);
 
-    /* gLinkDekuSkel: FlexSkeletonHeader with LodLimb entries */
-    const skeletonHeader = editor.processFlexSkeletonLodHeaderAddr(0x0600ba24);
+    /* XML declares exactly 21 Flex LOD limbs for gLinkDekuSkel. */
+    const skeletonHeader = editor.processFlexSkeletonLodHeaderAddr(0x0600ba24, 21);
     editor.submitOut(skeletonHeader);
 
-    return { name: 'DEKU_LINK', ...editor.build() };
+    const result = editor.build();
+    if (result.offsets.length !== 1 || result.offsets[0] !== skeletonHeader) {
+      throw new Error('Deku skeleton header was not registered as the first custom-object offset');
+    }
+    return { name: 'DEKU_LINK', ...result };
   }
 
   async build(): Promise<CustomObject[]> {
