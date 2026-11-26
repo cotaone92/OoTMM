@@ -253,6 +253,41 @@ export class ObjectEditor {
     return this.emitData(newData);
   }
 
+  processSkeletonLodLimbAddr(addr: number) {
+    const data = this.segData(addr, 0x10);
+    if (!data)
+      return addr;
+    const newData = new Uint8Array(data);
+    const nearList = this.processListAddr(bufReadU32BE(data, 0x08));
+    const farList = this.processListAddr(bufReadU32BE(data, 0x0c));
+    bufWriteU32BE(newData, 0x08, nearList);
+    bufWriteU32BE(newData, 0x0c, farList);
+    return this.emitData(newData);
+  }
+
+  processSkeletonLodLimbsAddr(addr: number, count: number) {
+    const data = this.segData(addr, 4 * count);
+    if (!data)
+      return addr;
+    const newData = new Uint8Array(data);
+    for (let i = 0; i < count; ++i) {
+      const newLimb = this.processSkeletonLodLimbAddr(bufReadU32BE(data, i * 4));
+      bufWriteU32BE(newData, i * 4, newLimb);
+    }
+    return this.emitData(newData);
+  }
+
+  processFlexSkeletonLodHeaderAddr(addr: number) {
+    const data = this.segData(addr, 0xc);
+    if (!data)
+      return addr;
+    const newData = new Uint8Array(data);
+    const limbCount = bufReadU8(data, 0x04);
+    const newLimbs = this.processSkeletonLodLimbsAddr(bufReadU32BE(data, 0), limbCount);
+    bufWriteU32BE(newData, 0, newLimbs);
+    return this.emitData(newData);
+  }
+
   private processAnimatedMatColorParamsAddr(addr: number) {
     const data = this.segData(addr, 0x10);
     if (!data)
