@@ -1046,7 +1046,7 @@ void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32
             header = SEGMENTED_TO_VIRTUAL(CUSTOM_OBJECT_DEKU_LINK_0);
             if (header && header->sh.limbCount > 0 &&
                 header->sh.limbCount < PLAYER_LIMB_MAX &&
-                header->dListCount == 2)
+                header->dListCount > 0 && header->dListCount <= 0x40)
             {
                 dekuSkeleton = SEGMENTED_TO_VIRTUAL((u32)header->sh.segment);
                 if (dekuSkeleton)
