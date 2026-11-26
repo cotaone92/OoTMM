@@ -255,36 +255,56 @@ export class ObjectEditor {
 
   processSkeletonLodLimbAddr(addr: number) {
     const data = this.segData(addr, 0x10);
-    if (!data)
-      return addr;
+    if (!data || data.length !== 0x10) {
+      throw new Error(`Invalid LOD limb at 0x${addr.toString(16)}`);
+    }
+
     const newData = new Uint8Array(data);
-    const nearList = this.processListAddr(bufReadU32BE(data, 0x08));
-    const farList = this.processListAddr(bufReadU32BE(data, 0x0c));
-    bufWriteU32BE(newData, 0x08, nearList);
-    bufWriteU32BE(newData, 0x0c, farList);
+    for (const offset of [0x08, 0x0c]) {
+      const listAddr = bufReadU32BE(data, offset);
+      if (listAddr === 0)
+        continue;
+      if (!this.listData(listAddr)) {
+        throw new Error(`Missing LOD display list 0x${listAddr.toString(16)} referenced by limb 0x${addr.toString(16)}`);
+      }
+      bufWriteU32BE(newData, offset, this.processListAddr(listAddr));
+    }
     return this.emitData(newData);
   }
 
   processSkeletonLodLimbsAddr(addr: number, count: number) {
+    if (count <= 0 || count > 0x40) {
+      throw new Error(`Invalid LOD limb count: ${count}`);
+    }
     const data = this.segData(addr, 4 * count);
-    if (!data)
-      return addr;
+    if (!data || data.length !== 4 * count) {
+      throw new Error(`Missing LOD limb table at 0x${addr.toString(16)} (count=${count})`);
+    }
     const newData = new Uint8Array(data);
     for (let i = 0; i < count; ++i) {
-      const newLimb = this.processSkeletonLodLimbAddr(bufReadU32BE(data, i * 4));
+      const limbAddr = bufReadU32BE(data, i * 4);
+      if (limbAddr === 0) {
+        throw new Error(`Null LOD limb pointer at index ${i}`);
+      }
+      const newLimb = this.processSkeletonLodLimbAddr(limbAddr);
       bufWriteU32BE(newData, i * 4, newLimb);
     }
     return this.emitData(newData);
   }
 
-  processFlexSkeletonLodHeaderAddr(addr: number) {
-    const data = this.segData(addr, 0xc);
-    if (!data)
-      return addr;
-    const newData = new Uint8Array(data);
+  processFlexSkeletonLodHeaderAddr(addr: number, expectedLimbCount?: number) {
+    const data = this.segData(addr, 0x0c);
+    if (!data || data.length !== 0x0c) {
+      throw new Error(`Missing FlexSkeletonHeader at 0x${addr.toString(16)}`);
+    }
     const limbCount = bufReadU8(data, 0x04);
-    const newLimbs = this.processSkeletonLodLimbsAddr(bufReadU32BE(data, 0), limbCount);
-    bufWriteU32BE(newData, 0, newLimbs);
+    if (expectedLimbCount !== undefined && limbCount !== expectedLimbCount) {
+      throw new Error(`Unexpected LOD skeleton limb count: expected ${expectedLimbCount}, got ${limbCount}`);
+    }
+    const limbTableAddr = bufReadU32BE(data, 0x00);
+    const newData = new Uint8Array(data);
+    const newLimbs = this.processSkeletonLodLimbsAddr(limbTableAddr, limbCount);
+    bufWriteU32BE(newData, 0x00, newLimbs);
     return this.emitData(newData);
   }
 
