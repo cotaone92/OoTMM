@@ -14,6 +14,13 @@
 #include <combo/oot/player_action.h>
 #include <actors/Custom_En_Bom/Custom_En_Bom.h>
 
+extern void* gExObjectsAddr[128];
+
+#define OOT_EX_OBJECT_SLOTS_NORMAL 19
+#define OOT_EX_OBJECT_SLOTS_TOTAL 128
+#define OOT_PLAYER_FORM_HUMAN 0
+#define OOT_PLAYER_FORM_DEKU  1
+
 void ArrowCycle_Handle(Player* link, PlayState* play);
 void Ocarina_HandleCustomSongs(Player* link, PlayState* play);
 
@@ -24,6 +31,42 @@ s32 Player_IsKamaroMaskActiveOoT(Player* link);
 
 static Input sKamaroInput;
 static s32 sKamaroInputValid;
+
+static PlayState* sDekuFormPlay;
+static Player* sDekuFormPlayer;
+static u8 sDekuFormActive;
+
+void OotDekuForm_Reset(void)
+{
+    sDekuFormPlay = NULL;
+    sDekuFormPlayer = NULL;
+    sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
+}
+
+static void OotDekuForm_Bind(PlayState* play, Player* player)
+{
+    if (sDekuFormPlay != play || sDekuFormPlayer != player)
+    {
+        sDekuFormPlay = play;
+        sDekuFormPlayer = player;
+        sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
+    }
+}
+
+int OotDekuForm_IsActive(PlayState* play, Player* player)
+{
+    OotDekuForm_Bind(play, player);
+    return sDekuFormActive == OOT_PLAYER_FORM_DEKU;
+}
+
+int OotDekuForm_Set(PlayState* play, Player* player, u8 form)
+{
+    OotDekuForm_Bind(play, player);
+    if (form != OOT_PLAYER_FORM_HUMAN && form != OOT_PLAYER_FORM_DEKU)
+        return 0;
+    sDekuFormActive = form;
+    return 1;
+}
 
 void* Player_AllocObjectBuffer(u32 size)
 {
@@ -421,6 +464,7 @@ void Player_UpdateWrapper(Player* this, PlayState* play)
 {
     Input* input;
     Input* kamaroInput;
+    OotDekuForm_Bind(play, this);
     updateKokiriSwordLength();
 
     if (gBlastMaskDelayAcc)
@@ -955,6 +999,25 @@ static Color_RGB8 sGauntletColors[] = {
 
 void DrawChildGauntlets(PlayState* play);
 
+static void* Player_GetDekuObject(PlayState* play)
+{
+    int slot;
+    if (!play)
+        return NULL;
+
+    slot = Object_GetSlot(&play->objectCtx, CUSTOM_OBJECT_ID_DEKU_LINK);
+    if (slot < 0 || slot >= OOT_EX_OBJECT_SLOTS_TOTAL)
+        return NULL;
+    if (!Object_IsLoaded(&play->objectCtx, slot))
+        return NULL;
+
+    if (slot < OOT_EX_OBJECT_SLOTS_NORMAL)
+        return play->objectCtx.status[slot].segment;
+    return gExObjectsAddr[slot];
+}
+
+static Vec3s sDekuJointTable[PLAYER_LIMB_MAX];
+
 void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32 dListCount, void* overrideLimbDraw, void* postLimbDraw, void* arg, s32 lod)
 {
     Color_RGB8* c;
@@ -962,6 +1025,52 @@ void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32
     void* bootsData;
     u32 bootsList;
     u32 bootsList2;
+
+    /* Draw the imported Deku LOD skeleton instead of the human skeleton. */
+    if (OotDekuForm_IsActive(play, GET_PLAYER(play)))
+    {
+        void* object = Player_GetDekuObject(play);
+        if (object)
+        {
+            u32 previousSegment = gSegments[6];
+            FlexSkeletonHeader* header;
+            void** dekuSkeleton;
+            int canDraw = 0;
+
+            gSegments[6] = (u32)object - K0BASE;
+            OPEN_DISPS(play->state.gfxCtx);
+            gSPSegment(POLY_OPA_DISP++, 0x06, (void*)((u32)object));
+            gSPSegment(POLY_XLU_DISP++, 0x06, (void*)((u32)object));
+            CLOSE_DISPS();
+
+            header = SEGMENTED_TO_VIRTUAL(CUSTOM_OBJECT_DEKU_LINK_0);
+            if (header && header->sh.limbCount > 0 &&
+                header->sh.limbCount < PLAYER_LIMB_MAX &&
+                header->dListCount == 2)
+            {
+                dekuSkeleton = SEGMENTED_TO_VIRTUAL((u32)header->sh.segment);
+                if (dekuSkeleton)
+                {
+                    memset(sDekuJointTable, 0, sizeof(sDekuJointTable));
+                    sDekuJointTable[0] = jointTable[0];
+                    sDekuJointTable[1] = jointTable[1];
+                    SkelAnime_DrawFlexLod(play, dekuSkeleton, sDekuJointTable,
+                                          header->dListCount, NULL, NULL,
+                                          GET_PLAYER(play), lod);
+                    canDraw = 1;
+                }
+            }
+
+            gSegments[6] = previousSegment;
+            OPEN_DISPS(play->state.gfxCtx);
+            gSPSegment(POLY_OPA_DISP++, 0x06, (void*)(previousSegment + K0BASE));
+            gSPSegment(POLY_XLU_DISP++, 0x06, (void*)(previousSegment + K0BASE));
+            CLOSE_DISPS();
+
+            if (canDraw)
+                return;
+        }
+    }
 
     /* Load hookshot data if child */
     if (gSave.age == AGE_CHILD)
