@@ -20,6 +20,8 @@
 
 PlayState* gPlay;
 
+void OotDekuForm_Reset(void);
+
 void Play_GoToFileSelect(GameState* gs)
 {
     gs->nextGameStateInit = FileSelect_Init;
@@ -566,6 +568,7 @@ static void Play_ApplyClock(void)
 void hookPlay_Init(PlayState* play)
 {
     gPlay = play;
+    OotDekuForm_Reset();
 
     /* Init */
     gIsEntranceOverride = 0;
