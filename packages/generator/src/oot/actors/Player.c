@@ -47,6 +47,12 @@ void OotDekuForm_Reset(void)
 
 static void OotDekuForm_Bind(PlayState* play, Player* player)
 {
+    if (!play || !player)
+    {
+        OotDekuForm_Reset();
+        return;
+    }
+
     if (sDekuFormPlay != play || sDekuFormPlayer != player || sDekuFormSceneId != play->sceneId)
     {
         sDekuFormPlay = play;
@@ -65,6 +71,8 @@ int OotDekuForm_IsActive(PlayState* play, Player* player)
 int OotDekuForm_Set(PlayState* play, Player* player, u8 form)
 {
     OotDekuForm_Bind(play, player);
+    if (!play || !player)
+        return 0;
     if (form != OOT_PLAYER_FORM_HUMAN && form != OOT_PLAYER_FORM_DEKU)
         return 0;
     sDekuFormActive = form;
