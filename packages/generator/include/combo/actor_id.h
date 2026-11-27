@@ -115,6 +115,7 @@
 # define ACTOR_DOOR_TOKI               0x070
 # define ACTOR_BG_HIDAN_HAMSTEP        0x071
 # define ACTOR_EN_BIRD                 0x072
+# define ACTOR_CUSTOM_DEKU_BUBBLE       0x073
 # define ACTOR_EN_WOOD02               0x077
 # define ACTOR_EN_LIGHTBOX             0x07c
 # define ACTOR_EN_PU_BOX               0x07d
