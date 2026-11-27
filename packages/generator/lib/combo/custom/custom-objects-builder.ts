@@ -537,7 +537,7 @@ export class CustomObjectsBuilder {
     return { name: 'GI_SHOVEL', ...editor.build() }
   }
 
-  private async makeDekuLink(): Promise<CustomObject> {
+  async buildDekuLink(): Promise<CustomObject> {
     const editor = new ObjectEditor(0x06);
     const obj = await this.getFile('mm', 'objects/object_link_nuts');
 
@@ -600,7 +600,6 @@ export class CustomObjectsBuilder {
       await this.makeClearTag(),
       await this.makeDoorLock(),
       await this.makeGiShovel(),
-      await this.makeDekuLink(),
       //await this.simpleExtract('LIMB_OOT_CHILD_LHAND_CLOSED', 'oot', 'objects/object_link_child', [], 0x06, 0x0a),
     ];
   }
