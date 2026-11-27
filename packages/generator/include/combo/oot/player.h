@@ -10,7 +10,6 @@ struct Player;
 void OotDekuForm_Reset(void);
 int OotDekuForm_IsActive(struct PlayState* play, struct Player* player);
 int OotDekuForm_Set(struct PlayState* play, struct Player* player, u8 form);
-int OotDekuForm_PlayAnimation(struct PlayState* play, struct Player* player, void* animation, int loop);
 
 #define PLAYER_STATE1_0 (1 << 0)
 #define PLAYER_STATE1_SWINGING_BOTTLE (1 << 1) // Bottle is swung; Bottle is active and can catch things
