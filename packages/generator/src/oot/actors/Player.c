@@ -49,6 +49,8 @@ static Player* sDekuFormPlayer;
 static s16 sDekuFormSceneId;
 static u8 sDekuFormActive;
 static u8 sDekuGuardActive;
+static u8 sDekuBubbleCharge;
+static u8 sDekuBubbleCharging;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
 static u8 sDekuWasShielding;
 #endif
@@ -61,6 +63,8 @@ void OotDekuForm_Reset(void)
     sDekuFormSceneId = -1;
     sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
     sDekuGuardActive = 0;
+    sDekuBubbleCharge = 0;
+    sDekuBubbleCharging = 0;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
     sDekuWasShielding = 0;
 #endif
@@ -81,6 +85,8 @@ static void OotDekuForm_Bind(PlayState* play, Player* player)
         sDekuFormSceneId = play->sceneId;
         sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
         sDekuGuardActive = 0;
+        sDekuBubbleCharge = 0;
+        sDekuBubbleCharging = 0;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
         sDekuWasShielding = 0;
 #endif
@@ -742,22 +748,70 @@ void Player_ProcessItemButtonsWrapper(Player* link, PlayState* play)
     Player_ProcessItemButtons = OverlayAddr(0x80831e64);
     bPress = !!(input->press.button & B_BUTTON);
 
-    /* Handle masks that have B actions */
-    if (bPress && !(link->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) && !Player_UsingItem(link) && GET_PLAYER(play)->rideActor == NULL)
+    /*
+     * Deku bubble prototype: B charges while held and launches on release.
+     * Consume B only in Deku form so human sword/item behavior remains vanilla.
+     */
+    if (OotDekuForm_IsActive(play, link))
     {
-        switch (link->mask)
+        int canFire = !(link->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) &&
+                      !Player_UsingItem(link) && link->rideActor == NULL &&
+                      Player_GetDekuObject(play) != NULL;
+
+        if (!canFire)
         {
-            case MASK_KAMARO:
-                sKamaroInput = *input;
-                sKamaroInputValid = 1;
+            sDekuBubbleCharge = 0;
+            sDekuBubbleCharging = 0;
+        }
+        else if (input->press.button & B_BUTTON)
+        {
+            sDekuBubbleCharge = 0;
+            sDekuBubbleCharging = 1;
+        }
+        else if (sDekuBubbleCharging && (input->cur.button & B_BUTTON))
+        {
+            if (sDekuBubbleCharge < 30)
+                sDekuBubbleCharge++;
+        }
+        else if (sDekuBubbleCharging)
+        {
+            f32 yaw = (f32)link->actor.shape.rot.y;
+            f32 sinYaw = Math_SinS(link->actor.shape.rot.y);
+            f32 cosYaw = Math_CosS(link->actor.shape.rot.y);
+            f32 x = link->actor.world.pos.x + sinYaw * 20.0f;
+            f32 y = link->actor.world.pos.y + 22.0f;
+            f32 z = link->actor.world.pos.z + cosYaw * 20.0f;
 
-                input->press.button &= ~B_BUTTON;
-                break;
+            Actor_Spawn(&play->actorCtx, play, ACTOR_CUSTOM_DEKU_BUBBLE,
+                        x, y, z, 0, (s16)yaw, 0, sDekuBubbleCharge);
+            sDekuBubbleCharge = 0;
+            sDekuBubbleCharging = 0;
+        }
 
-            case MASK_BLAST:
-                Player_BlastMask(play, link);
-                input->press.button &= ~B_BUTTON;
-                break;
+        input->press.button &= ~B_BUTTON;
+    }
+    else
+    {
+        sDekuBubbleCharge = 0;
+        sDekuBubbleCharging = 0;
+
+        /* Handle masks that have B actions */
+        if (bPress && !(link->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) && !Player_UsingItem(link) && GET_PLAYER(play)->rideActor == NULL)
+        {
+            switch (link->mask)
+            {
+                case MASK_KAMARO:
+                    sKamaroInput = *input;
+                    sKamaroInputValid = 1;
+
+                    input->press.button &= ~B_BUTTON;
+                    break;
+
+                case MASK_BLAST:
+                    Player_BlastMask(play, link);
+                    input->press.button &= ~B_BUTTON;
+                    break;
+            }
         }
     }
 
