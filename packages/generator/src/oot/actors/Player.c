@@ -80,6 +80,26 @@ int OotDekuForm_Set(PlayState* play, Player* player, u8 form)
     return 1;
 }
 
+/*
+ * Runtime bridge for imported MM Deku animations. The imported header layout
+ * is compatible with LinkAnimationHeader; animations.c redirects frame DMA
+ * to the source game's link_animetion file.
+ */
+int OotDekuForm_PlayAnimation(PlayState* play, Player* player, void* animation, int loop)
+{
+    if (!play || !player || !animation)
+        return 0;
+    if (!OotDekuForm_IsActive(play, player) || !Player_GetDekuObject(play))
+        return 0;
+
+    if (loop)
+        LinkAnimation_PlayLoop(play, &player->skelAnime, (LinkAnimationHeader*)animation);
+    else
+        LinkAnimation_PlayOnce(play, &player->skelAnime, (LinkAnimationHeader*)animation);
+
+    return 1;
+}
+
 /* L is unused by the OoT item layout; reserve it as the prototype form toggle. */
 static void OotDekuForm_HandleInput(PlayState* play, Player* player, Input* input)
 {
