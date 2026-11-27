@@ -93,7 +93,6 @@ static void DekuBubble_Draw(Actor* thisx, PlayState* play)
     );
     Matrix_ReplaceRotation(&play->billboardMtxF);
     Matrix_Scale(this->actor.scale.x, this->actor.scale.y, this->actor.scale.z, MTXMODE_APPLY);
-    Matrix_RotateZ(DEG_TO_RAD((f32)play->state.frames * 2.0f), MTXMODE_APPLY);
     gSPMatrix(POLY_XLU_DISP++, Matrix_Finalize(play->state.gfxCtx),
               G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     /* Native OoT bubble object: object_bubble, segment 6, gBubbleDL at 0x1000. */
