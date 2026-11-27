@@ -29,8 +29,8 @@ jobs:
       - name: Install repository dependencies
         uses: ./.github/actions/setup
 
-      - name: Check patch formatting
-        run: git diff --check
+      - name: Check latest commit formatting
+        run: git show --check --oneline HEAD
 
       - name: Typecheck
         run: pnpm typecheck
