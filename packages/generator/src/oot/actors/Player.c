@@ -48,6 +48,7 @@ static PlayState* sDekuFormPlay;
 static Player* sDekuFormPlayer;
 static s16 sDekuFormSceneId;
 static u8 sDekuFormActive;
+static u8 sDekuGuardActive;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
 static u8 sDekuWasShielding;
 #endif
@@ -59,6 +60,7 @@ void OotDekuForm_Reset(void)
     sDekuFormPlayer = NULL;
     sDekuFormSceneId = -1;
     sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
+    sDekuGuardActive = 0;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
     sDekuWasShielding = 0;
 #endif
@@ -78,6 +80,7 @@ static void OotDekuForm_Bind(PlayState* play, Player* player)
         sDekuFormPlayer = player;
         sDekuFormSceneId = play->sceneId;
         sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
+        sDekuGuardActive = 0;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
         sDekuWasShielding = 0;
 #endif
@@ -122,6 +125,70 @@ static void OotDekuForm_HandleInput(PlayState* play, Player* player, Input* inpu
 
     input->press.button &= ~L_TRIG;
     OotDekuForm_Set(play, player, nextForm);
+}
+
+/*
+ * Deku guard uses OoT's existing hard shield quad, but supplies its own
+ * world-space front plane because the imported Deku skeleton has no human
+ * shield-hand limb. R is held to guard; only the Deku form owns this state.
+ */
+static void OotDekuForm_UpdateGuard(PlayState* play, Player* player, Input* input)
+{
+    Vec3f v[4];
+    f32 sinYaw;
+    f32 cosYaw;
+    f32 centerX;
+    f32 centerZ;
+    f32 halfWidth = 18.0f;
+    f32 frontOffset = 16.0f;
+    f32 bottomY;
+    f32 topY;
+
+    if (!play || !player)
+        return;
+
+    if (!OotDekuForm_IsActive(play, player))
+    {
+        if (sDekuGuardActive)
+            player->stateFlags1 &= ~PLAYER_STATE1_SHIELDING;
+        sDekuGuardActive = 0;
+        return;
+    }
+
+    if (!input || !(input->cur.button & BTN_R) ||
+        (player->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) ||
+        Player_UsingItem(player) || player->rideActor != NULL)
+    {
+        player->stateFlags1 &= ~PLAYER_STATE1_SHIELDING;
+        sDekuGuardActive = 0;
+        return;
+    }
+
+    player->stateFlags1 |= PLAYER_STATE1_SHIELDING;
+    sDekuGuardActive = 1;
+
+    sinYaw = Math_SinS(player->actor.shape.rot.y);
+    cosYaw = Math_CosS(player->actor.shape.rot.y);
+    centerX = player->actor.world.pos.x + sinYaw * frontOffset;
+    centerZ = player->actor.world.pos.z + cosYaw * frontOffset;
+    bottomY = player->actor.world.pos.y + 5.0f;
+    topY = player->actor.world.pos.y + 35.0f;
+
+    v[0].x = centerX - cosYaw * halfWidth;
+    v[0].y = bottomY;
+    v[0].z = centerZ + sinYaw * halfWidth;
+    v[1].x = centerX + cosYaw * halfWidth;
+    v[1].y = bottomY;
+    v[1].z = centerZ - sinYaw * halfWidth;
+    v[2].x = centerX + cosYaw * halfWidth;
+    v[2].y = topY;
+    v[2].z = centerZ - sinYaw * halfWidth;
+    v[3].x = centerX - cosYaw * halfWidth;
+    v[3].y = topY;
+    v[3].z = centerZ + sinYaw * halfWidth;
+
+    Collider_SetQuadVertices(&player->shieldQuad, &v[0], &v[1], &v[2], &v[3]);
+    CollisionCheck_SetAC(play, &play->colChkCtx, &player->shieldQuad.base);
 }
 
 void* Player_AllocObjectBuffer(u32 size)
@@ -535,6 +602,7 @@ void Player_UpdateWrapper(Player* this, PlayState* play)
     Player_Update(this, play);
     input = *(Input**)(OverlayAddr(0x80856734));
     OotDekuForm_HandleInput(play, this, input);
+    OotDekuForm_UpdateGuard(play, this, input);
 
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
     /*
