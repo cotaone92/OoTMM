@@ -27,11 +27,15 @@ static void DekuBubble_Init(Actor* thisx, PlayState* play)
 {
     DekuBubble* this = THIS;
 
+    u8 charge = (u8)this->actor.params;
+
+    if (charge > 30)
+        charge = 30;
     this->timer = 99;
     this->alpha = 220;
     this->actor.gravity = 0.0f;
-    this->actor.speed = 12.0f;
-    Actor_SetScale(&this->actor, 0.006f);
+    this->actor.speed = 8.0f + (charge * 0.18f);
+    Actor_SetScale(&this->actor, 0.0045f + (charge * 0.00005f));
 
     Collider_InitCylinder(play, &this->collider);
     Collider_SetCylinder(play, &this->collider, &this->actor, &sColliderInit);
