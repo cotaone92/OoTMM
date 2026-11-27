@@ -21,6 +21,7 @@ jobs:
   validate:
     name: Tests and TypeScript validation
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     container: ghcr.io/ootmm/toolchain:1.4
     steps:
       - name: Checkout
