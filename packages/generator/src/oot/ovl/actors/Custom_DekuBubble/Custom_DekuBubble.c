@@ -33,6 +33,7 @@ static void DekuBubble_Init(Actor* thisx, PlayState* play)
         charge = 30;
     this->timer = 99;
     this->bounceCount = 0;
+    this->baseYaw = this->actor.world.rot.y;
     this->expansion = charge * (0.01f / 1.0f);
     /* Gentle lift and drag give the projectile the floaty MM bubble trajectory. */
     this->actor.gravity = -0.015f;
@@ -86,9 +87,13 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
     /* A shield reflection reverses the flight; ordinary target contact pops it. */
     if (this->collider.base.atFlags & AT_HIT)
     {
-        if ((this->collider.base.atFlags & AT_BOUNCED) && (this->bounceCount < 2))
+        if ((this->collider.base.atFlags & AT_BOUNCED) && (this->bounceCount < 2) &&
+            (this->collider.base.at != NULL) && (this->collider.elem.atHitElem != NULL) &&
+            (this->collider.elem.atHitElem->elemMaterial != ELEM_MATERIAL_UNK4))
         {
-            this->actor.world.rot.y += 0x8000;
+            /* Follow MM: only valid shield/material bounces reflect the bubble. */
+            this->actor.world.rot.y += 0x8000 + ((this->bounceCount == 0) ? 0x0800 : -0x0800);
+            this->baseYaw = this->actor.world.rot.y;
             this->actor.velocity.y = -this->actor.velocity.y;
             this->actor.world.pos = this->actor.prevPos;
             this->collider.base.atFlags &= ~(AT_HIT | AT_BOUNCED);
@@ -116,7 +121,8 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
         s16 flightFrame = (s16)(99 - this->timer);
         s16 sway = (s16)(Math_SinS(flightFrame * 0x0A00) * 0x0180);
 
-        this->actor.world.rot.y += sway;
+        /* Keep sway bounded around the current travel heading; do not integrate it. */
+        this->actor.world.rot.y = this->baseYaw + sway;
         if (this->actor.speed > 4.0f)
         {
             this->actor.speed -= 0.025f;
@@ -146,7 +152,10 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
         /* Rebound from level geometry at reduced horizontal speed. */
         this->actor.world.pos = this->actor.prevPos;
         if (this->actor.bgCheckFlags & BGCHECKFLAG_WALL)
-            this->actor.world.rot.y += 0x8000;
+        {
+            this->baseYaw += 0x8000;
+            this->actor.world.rot.y = this->baseYaw;
+        }
         if (this->actor.bgCheckFlags & BGCHECKFLAG_GROUND)
             this->actor.velocity.y = 3.0f;
         else if (this->actor.bgCheckFlags & BGCHECKFLAG_CEILING)
