@@ -33,7 +33,7 @@ typedef void (*LinkAnimation_PlayLoopSetSpeed_t)(
 #define OOT_EX_OBJECT_SLOTS_TOTAL 128
 #define OOT_PLAYER_FORM_HUMAN 0
 #define OOT_PLAYER_FORM_DEKU  1
-#define DEKU_BUBBLE_MAGIC_COST 1
+#define DEKU_BUBBLE_MAGIC_COST 2 /* MM sMagicArrowCosts[ARROW_MAGIC_DEKU_BUBBLE] */
 
 void ArrowCycle_Handle(Player* link, PlayState* play);
 void Ocarina_HandleCustomSongs(Player* link, PlayState* play);
