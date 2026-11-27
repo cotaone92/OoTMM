@@ -74,6 +74,7 @@ static void OotDekuForm_Bind(PlayState* play, Player* player)
         sDekuFormPlayer = player;
         sDekuFormSceneId = play->sceneId;
         sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
+        sDekuWasShielding = 0;
     }
 }
 
