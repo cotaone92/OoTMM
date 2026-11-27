@@ -9,6 +9,7 @@ typedef struct DekuBubble {
     /* 0x190 */ s16 timer;
     /* 0x194 */ f32 expansion;
     /* 0x198 */ u8 bounceCount;
+    /* 0x19A */ s16 baseYaw;
 } DekuBubble;
 
 #endif
