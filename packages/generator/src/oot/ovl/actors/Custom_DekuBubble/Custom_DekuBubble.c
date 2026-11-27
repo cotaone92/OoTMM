@@ -107,6 +107,24 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
         }
     }
 
+    /*
+     * MM bubbles drift rather than flying like rigid arrows. Apply a subtle,
+     * deterministic side-to-side course change and ease the horizontal speed
+     * down over the life of the projectile.
+     */
+    {
+        s16 flightFrame = (s16)(99 - this->timer);
+        s16 sway = (s16)(Math_SinS(flightFrame * 0x0A00) * 0x0180);
+
+        this->actor.world.rot.y += sway;
+        if (this->actor.speed > 4.0f)
+        {
+            this->actor.speed -= 0.025f;
+            if (this->actor.speed < 4.0f)
+                this->actor.speed = 4.0f;
+        }
+    }
+
     Actor_MoveXZGravity(&this->actor);
     Actor_UpdateBgCheckInfo(
         play,
