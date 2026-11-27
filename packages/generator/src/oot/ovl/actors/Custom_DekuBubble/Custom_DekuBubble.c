@@ -55,6 +55,14 @@ static void DekuBubble_Destroy(Actor* thisx, PlayState* play)
     Collider_DestroyCylinder(play, &this->collider);
 }
 
+static void DekuBubble_Pop(DekuBubble* this, PlayState* play)
+{
+    /* OoT-native burst particles and impact sound at the actual contact point. */
+    EffectSsStone1_Spawn(play, &this->actor.world.pos, false);
+    SfxSource_PlaySfxAtFixedWorldPos(play, &this->actor.world.pos, 20, NA_SE_IT_DEKU);
+    Actor_Kill(&this->actor);
+}
+
 static void DekuBubble_Update(Actor* thisx, PlayState* play)
 {
     DekuBubble* this = THIS;
@@ -63,7 +71,7 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
         this->timer--;
     if (this->timer <= 0)
     {
-        Actor_Kill(&this->actor);
+        DekuBubble_Pop(this, play);
         return;
     }
 
@@ -80,7 +88,11 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
         }
         else
         {
-            Actor_Kill(&this->actor);
+            if (this->collider.elem.atHitElem != NULL && (this->collider.elem.atHitElem->acElemFlags & ACELEM_HIT))
+            {
+                this->actor.world.pos = this->collider.elem.atHitElem->acDmgInfo.hitPos;
+            }
+            DekuBubble_Pop(this, play);
             return;
         }
     }
@@ -99,7 +111,7 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
     {
         if (this->bounceCount >= 2)
         {
-            Actor_Kill(&this->actor);
+            DekuBubble_Pop(this, play);
             return;
         }
 
