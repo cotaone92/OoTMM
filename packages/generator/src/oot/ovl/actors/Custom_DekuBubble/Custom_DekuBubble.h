@@ -7,7 +7,7 @@ typedef struct DekuBubble {
     /* 0x000 */ Actor actor;
     /* 0x144 */ ColliderCylinder collider;
     /* 0x190 */ s16 timer;
-    /* 0x192 */ u8 alpha;
+    /* 0x192 */ f32 expansion;
 } DekuBubble;
 
 #endif
