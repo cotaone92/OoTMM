@@ -10,7 +10,7 @@ import { CodeGen } from '../util/codegen.ts';
 type AnimationDef = {
   name: string;
   home_game: Game;
-  frame_data_offset: number | string;
+  frame_data_offset?: number | string;
   header_offset: number | string;
   frame_data_size?: number | string;
   frame_count?: number | string;
@@ -154,12 +154,15 @@ function parseSourcePlayerAnimHeader(buf: Uint8Array, off: number): SourcePlayer
 function buildImportedAnimation(roms: DecompressedRoms, def: CustomAnimation): ImportedAnimation {
   const srcGame = def.home_game;
   const dstGame = otherGame(srcGame);
-  const frameDataOffset = parseNum(def.frame_data_offset, `${def.name}.frame_data_offset`);
   const headerOffset = parseNum(def.header_offset, `${def.name}.header_offset`);
   const srcGameplayKeep = getFileFromRom(roms, srcGame, 'objects/gameplay_keep');
   const srcLinkAnim = getFileFromRom(roms, srcGame, 'link_animetion');
   const sourceHeader = parseSourcePlayerAnimHeader(srcGameplayKeep, headerOffset);
+  const sourceSegment = sourceHeader.frameDataSegmented >>> 24;
   const sourceFrameDataOffset = sourceHeader.frameDataSegmented & 0x00ffffff;
+  const frameDataOffset = def.frame_data_offset === undefined
+    ? sourceFrameDataOffset
+    : parseNum(def.frame_data_offset, `${def.name}.frame_data_offset`);
   const frameCount = sourceHeader.frameCount;
   const limbCount = def.limb_count === undefined
     ? PLAYER_LIMB_COUNT
@@ -173,6 +176,12 @@ function buildImportedAnimation(roms: DecompressedRoms, def: CustomAnimation): I
 
   if (!Number.isInteger(limbCount) || limbCount <= 0 || limbCount > PLAYER_LIMB_COUNT) {
     throw new Error(`${def.name}: invalid limb count ${limbCount}; expected 1..${PLAYER_LIMB_COUNT}`);
+  }
+
+  if (sourceSegment !== 0x07) {
+    throw new Error(
+      `${def.name}: expected source frame data in segment 0x07, got ${hex(sourceSegment)}`
+    );
   }
 
   if (sourceFrameDataOffset !== frameDataOffset) {
