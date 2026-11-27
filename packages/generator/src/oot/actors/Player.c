@@ -1088,12 +1088,12 @@ void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32
                 if (dekuSkeleton)
                 {
                     /*
-                     * The Deku skeleton follows the shared Link limb order, but
-                     * has 21 real limbs (the OoT table's NONE entry is not a limb).
-                     * Preserve every matching joint instead of zeroing the pose.
+                     * SkelAnime_DrawFlexLod consumes jointTable[0] as the root
+                     * translation and jointTable[1..limbCount] as limb rotations.
+                     * Copy the root plus all 21 Deku limb rotations.
                      */
                     memcpy(sDekuJointTable, jointTable,
-                           sizeof(Vec3s) * header->sh.limbCount);
+                           sizeof(Vec3s) * (header->sh.limbCount + 1));
                     SkelAnime_DrawFlexLod(play, dekuSkeleton, sDekuJointTable,
                                           header->dListCount, NULL, NULL,
                                           (Actor*)GET_PLAYER(play), lod);
