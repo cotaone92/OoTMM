@@ -63,3 +63,100 @@ animations:
     home_game: oot
     header_offset: 0x2628
     frame_data_offset: 0x79090
+
+  # Majora's Mask Deku Link animation set (21-limb skeleton; frame table includes root).
+  - name: gPlayerAnim_pn_Tbox_open
+    home_game: mm
+    header_offset: 0xE268
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_attack
+    home_game: mm
+    header_offset: 0xE270
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_batabata
+    home_game: mm
+    header_offset: 0xE278
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_doorA_open
+    home_game: mm
+    header_offset: 0xE280
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_doorB_open
+    home_game: mm
+    header_offset: 0xE288
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_drink
+    home_game: mm
+    header_offset: 0xE290
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_drinkend
+    home_game: mm
+    header_offset: 0xE298
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_drinkstart
+    home_game: mm
+    header_offset: 0xE2A0
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_gakkiplay
+    home_game: mm
+    header_offset: 0xE2A8
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_gakkistart
+    home_game: mm
+    header_offset: 0xE2B0
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_getA
+    home_game: mm
+    header_offset: 0xE2B8
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_getB
+    home_game: mm
+    header_offset: 0xE2C0
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_gurd
+    home_game: mm
+    header_offset: 0xE2C8
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_kakku
+    home_game: mm
+    header_offset: 0xE2D0
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_kakkufinish
+    home_game: mm
+    header_offset: 0xE2D8
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_maskoffstart
+    home_game: mm
+    header_offset: 0xE2E0
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_rakkafinish
+    home_game: mm
+    header_offset: 0xE2E8
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_tamahaki
+    home_game: mm
+    header_offset: 0xE2F0
+    limb_count: 22
+
+  - name: gPlayerAnim_pn_tamahakidf
+    home_game: mm
+    header_offset: 0xE2F8
+    limb_count: 22
+
