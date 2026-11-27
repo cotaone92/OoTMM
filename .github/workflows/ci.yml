@@ -30,6 +30,9 @@ jobs:
       - name: Install repository dependencies
         uses: ./.github/actions/setup
 
+      - name: Mark checkout as safe for Git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Check latest commit formatting
         run: git show --check --oneline HEAD
 
