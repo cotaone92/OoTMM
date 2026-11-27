@@ -54,6 +54,9 @@ static u8 sDekuBubbleCharging;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
 static u8 sDekuWasShielding;
 #endif
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+static u8 sDekuWasCharging;
+#endif
 static void* Player_GetDekuObject(PlayState* play);
 
 void OotDekuForm_Reset(void)
@@ -67,6 +70,9 @@ void OotDekuForm_Reset(void)
     sDekuBubbleCharging = 0;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
     sDekuWasShielding = 0;
+#endif
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+    sDekuWasCharging = 0;
 #endif
 }
 
@@ -89,6 +95,9 @@ static void OotDekuForm_Bind(PlayState* play, Player* player)
         sDekuBubbleCharging = 0;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
         sDekuWasShielding = 0;
+#endif
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+        sDekuWasCharging = 0;
 #endif
     }
 }
@@ -762,30 +771,61 @@ void Player_ProcessItemButtonsWrapper(Player* link, PlayState* play)
         {
             sDekuBubbleCharge = 0;
             sDekuBubbleCharging = 0;
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+            sDekuWasCharging = 0;
+#endif
         }
         else if (input->press.button & B_BUTTON)
         {
             sDekuBubbleCharge = 0;
             sDekuBubbleCharging = 1;
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+            sDekuWasCharging = 0;
+#endif
         }
         else if (sDekuBubbleCharging && (input->cur.button & B_BUTTON))
         {
             if (sDekuBubbleCharge < 30)
                 sDekuBubbleCharge++;
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+            if (!sDekuWasCharging)
+            {
+                LinkAnimation_PlayLoopSetSpeed_OOT(
+                    play,
+                    &link->skelAnime,
+                    (LinkAnimationHeader*)&gPlayerAnim_pn_tamahaki,
+                    1.0f
+                );
+                sDekuWasCharging = 1;
+            }
+#endif
         }
         else if (sDekuBubbleCharging)
         {
-            f32 yaw = (f32)link->actor.shape.rot.y;
             f32 sinYaw = Math_SinS(link->actor.shape.rot.y);
             f32 cosYaw = Math_CosS(link->actor.shape.rot.y);
             f32 x = link->actor.world.pos.x + sinYaw * 20.0f;
             f32 y = link->actor.world.pos.y + 22.0f;
             f32 z = link->actor.world.pos.z + cosYaw * 20.0f;
+            Actor* bubble = Actor_Spawn(
+                &play->actorCtx, play, ACTOR_CUSTOM_DEKU_BUBBLE,
+                x, y, z, 0, link->actor.shape.rot.y, 0, sDekuBubbleCharge
+            );
 
-            Actor_Spawn(&play->actorCtx, play, ACTOR_CUSTOM_DEKU_BUBBLE,
-                        x, y, z, 0, (s16)yaw, 0, sDekuBubbleCharge);
-            sDekuBubbleCharge = 0;
-            sDekuBubbleCharging = 0;
+            /* Clear the charge only after the projectile actor was allocated. */
+            if (bubble)
+            {
+                sDekuBubbleCharge = 0;
+                sDekuBubbleCharging = 0;
+            }
+            else
+            {
+                sDekuBubbleCharge = 0;
+                sDekuBubbleCharging = 0;
+            }
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+            sDekuWasCharging = 0;
+#endif
         }
 
         input->press.button &= ~B_BUTTON;
@@ -794,6 +834,9 @@ void Player_ProcessItemButtonsWrapper(Player* link, PlayState* play)
     {
         sDekuBubbleCharge = 0;
         sDekuBubbleCharging = 0;
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
+        sDekuWasCharging = 0;
+#endif
 
         /* Handle masks that have B actions */
         if (bPress && !(link->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) && !Player_UsingItem(link) && GET_PLAYER(play)->rideActor == NULL)
