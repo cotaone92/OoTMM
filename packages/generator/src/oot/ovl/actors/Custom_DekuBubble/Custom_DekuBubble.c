@@ -85,19 +85,19 @@ static void DekuBubble_Draw(Actor* thisx, PlayState* play)
 
     OPEN_DISPS(play->state.gfxCtx);
     Gfx_SetupDL25_Xlu(play->state.gfxCtx);
-    gDPSetPrimColor(POLY_XLU_DISP++, 0x80, 0x80, 145, 235, 255, this->alpha);
-    gDPSetEnvColor(POLY_XLU_DISP++, 30, 125, 255, 0);
     Matrix_Translate(
         this->actor.world.pos.x,
         this->actor.world.pos.y,
         this->actor.world.pos.z,
         MTXMODE_NEW
     );
-    Matrix_Scale(1.0f, 1.0f, 1.0f, MTXMODE_APPLY);
+    Matrix_ReplaceRotation(&play->billboardMtxF);
+    Matrix_Scale(this->actor.scale.x, this->actor.scale.y, this->actor.scale.z, MTXMODE_APPLY);
+    Matrix_RotateZ(DEG_TO_RAD((f32)play->state.frames * 2.0f), MTXMODE_APPLY);
     gSPMatrix(POLY_XLU_DISP++, Matrix_Finalize(play->state.gfxCtx),
               G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-    /* Temporary OoT translucent effect geometry; replace with imported MM bubble mesh. */
-    gSPDisplayList(POLY_XLU_DISP++, 0x04052a10);
+    /* Native OoT bubble object: object_bubble, segment 6, gBubbleDL at 0x1000. */
+    gSPDisplayList(POLY_XLU_DISP++, 0x06001000);
     CLOSE_DISPS();
 }
 
@@ -105,7 +105,7 @@ ActorProfile DekuBubble_InitVars = {
     ACTOR_CUSTOM_DEKU_BUBBLE,
     ACTORCAT_ITEMACTION,
     FLAGS,
-    OBJECT_GAMEPLAY_KEEP,
+    OBJECT_BUBBLE,
     sizeof(DekuBubble),
     DekuBubble_Init,
     DekuBubble_Destroy,
