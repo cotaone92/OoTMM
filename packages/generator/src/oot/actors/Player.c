@@ -48,7 +48,9 @@ static PlayState* sDekuFormPlay;
 static Player* sDekuFormPlayer;
 static s16 sDekuFormSceneId;
 static u8 sDekuFormActive;
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
 static u8 sDekuWasShielding;
+#endif
 static void* Player_GetDekuObject(PlayState* play);
 
 void OotDekuForm_Reset(void)
@@ -57,7 +59,9 @@ void OotDekuForm_Reset(void)
     sDekuFormPlayer = NULL;
     sDekuFormSceneId = -1;
     sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
     sDekuWasShielding = 0;
+#endif
 }
 
 static void OotDekuForm_Bind(PlayState* play, Player* player)
@@ -74,7 +78,9 @@ static void OotDekuForm_Bind(PlayState* play, Player* player)
         sDekuFormPlayer = player;
         sDekuFormSceneId = play->sceneId;
         sDekuFormActive = OOT_PLAYER_FORM_HUMAN;
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
         sDekuWasShielding = 0;
+#endif
     }
 }
 
@@ -530,6 +536,7 @@ void Player_UpdateWrapper(Player* this, PlayState* play)
     input = *(Input**)(OverlayAddr(0x80856734));
     OotDekuForm_HandleInput(play, this, input);
 
+#ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_GURD_FRAMECOUNT
     /*
      * The original OoT overlay exports this entry point at 0x8008C298.
      * It is already used by Item_Kamaro.c; do not link against the
@@ -553,6 +560,7 @@ void Player_UpdateWrapper(Player* this, PlayState* play)
     {
         sDekuWasShielding = 0;
     }
+#endif
 
     kamaroInput = sKamaroInputValid ? &sKamaroInput : input;
     if (!(this->stateFlags1 & (PLAYER_ACTOR_STATE_HOLD_ITEM | PLAYER_ACTOR_STATE_CUTSCENE_FROZEN)) && !Player_UsingItem(this) && GET_PLAYER(play)->rideActor == NULL)
