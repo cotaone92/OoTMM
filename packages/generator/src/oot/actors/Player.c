@@ -828,7 +828,9 @@ void Player_ProcessItemButtonsWrapper(Player* link, PlayState* play)
 #endif
         }
 
+        /* Prevent the vanilla sword/item path from seeing held B in Deku form. */
         input->press.button &= ~B_BUTTON;
+        input->cur.button &= ~B_BUTTON;
     }
     else
     {
