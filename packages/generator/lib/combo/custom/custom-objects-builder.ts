@@ -5,6 +5,7 @@ import { FILES } from '@ootmm/data';
 import { DmaData } from '../dma';
 import { arrayToIndexMap } from '../util';
 import { ObjectEditor } from './object-editor';
+import { bufReadU8, bufReadU32BE } from '../util/buffer';
 import { concatUint8Arrays } from 'uint8array-extras';
 import { mat4 } from 'gl-matrix';
 
@@ -548,6 +549,24 @@ export class CustomObjectsBuilder {
       throw new Error(
           `Majora's Mask object_link_nuts is truncated: expected at least 0x${(skeletonOffset + skeletonHeaderSize).toString(16)} bytes, got 0x${obj.length.toString(16)}`
       );
+    }
+
+    /* Validate the source header before attempting pointer relocation. */
+    const limbTableAddr = bufReadU32BE(obj, skeletonOffset);
+    const limbCount = bufReadU8(obj, skeletonOffset + 0x04);
+    const dListCount = bufReadU8(obj, skeletonOffset + 0x08);
+    if (limbCount !== 21) {
+      throw new Error(`Unexpected Deku skeleton limb count: expected 21, got ${limbCount}`);
+    }
+    if (dListCount === 0 || dListCount > 0x40) {
+      throw new Error(`Invalid Deku skeleton display-list count: ${dListCount}`);
+    }
+    if ((limbTableAddr >>> 24) !== 0x06) {
+      throw new Error(`Unexpected Deku limb-table segment: 0x${limbTableAddr.toString(16)}`);
+    }
+    const limbTableOffset = limbTableAddr & 0x00ffffff;
+    if (limbTableOffset + limbCount * 4 > obj.length) {
+      throw new Error('Deku limb table extends beyond object_link_nuts');
     }
 
     editor.loadSegment(0x06, obj);
