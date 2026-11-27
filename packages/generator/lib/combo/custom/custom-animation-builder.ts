@@ -14,6 +14,7 @@ type AnimationDef = {
   header_offset: number | string;
   frame_data_size?: number | string;
   frame_count?: number | string;
+  limb_count?: number | string;
 };
 
 type SourcePlayerAnimHeader = {
@@ -160,11 +161,18 @@ function buildImportedAnimation(roms: DecompressedRoms, def: CustomAnimation): I
   const sourceHeader = parseSourcePlayerAnimHeader(srcGameplayKeep, headerOffset);
   const sourceFrameDataOffset = sourceHeader.frameDataSegmented & 0x00ffffff;
   const frameCount = sourceHeader.frameCount;
-  const frameDataSize = sourceHeader.frameCount * PLAYER_ANIM_FRAME_SIZE;
-  const expectedFrameDataSize = sourceHeader.frameCount * PLAYER_ANIM_FRAME_SIZE;
+  const limbCount = def.limb_count === undefined
+    ? PLAYER_LIMB_COUNT
+    : parseNum(def.limb_count, `${def.name}.limb_count`);
+  const frameSize = limbCount * VEC3S_SIZE + 2;
+  const frameDataSize = frameCount * frameSize;
 
   if (sourceHeader.frameCount <= 0) {
     throw new Error(`${def.name}: invalid frame count ${sourceHeader.frameCount}`);
+  }
+
+  if (!Number.isInteger(limbCount) || limbCount <= 0 || limbCount > PLAYER_LIMB_COUNT) {
+    throw new Error(`${def.name}: invalid limb count ${limbCount}; expected 1..${PLAYER_LIMB_COUNT}`);
   }
 
   if (sourceFrameDataOffset !== frameDataOffset) {
@@ -174,17 +182,17 @@ function buildImportedAnimation(roms: DecompressedRoms, def: CustomAnimation): I
     );
   }
 
-  if (frameCount !== sourceHeader.frameCount) {
+  if (def.frame_count !== undefined &&
+      parseNum(def.frame_count, `${def.name}.frame_count`) !== frameCount) {
     throw new Error(
-      `${def.name}: direct foreign DMA does not support resampling; ` +
-      `frame_count ${frameCount} must match source frame count ${sourceHeader.frameCount}`
+      `${def.name}: declared frame_count does not match source header (${frameCount})`
     );
   }
 
-  if (frameDataSize !== expectedFrameDataSize) {
+  if (def.frame_data_size !== undefined &&
+      parseNum(def.frame_data_size, `${def.name}.frame_data_size`) !== frameDataSize) {
     throw new Error(
-      `${def.name}: direct foreign DMA requires full contiguous frame data; ` +
-      `frame_data_size ${hex(frameDataSize)} must equal ${hex(expectedFrameDataSize)}`
+      `${def.name}: frame_data_size must be ${hex(frameDataSize)} for ${limbCount} limbs`
     );
   }
 
@@ -196,7 +204,7 @@ function buildImportedAnimation(roms: DecompressedRoms, def: CustomAnimation): I
     dstGame,
     frameCount,
     frameDataOffset,
-    frameSize: PLAYER_ANIM_FRAME_SIZE,
+    frameSize,
   };
 }
 
