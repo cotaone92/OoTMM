@@ -12,7 +12,9 @@
     },
     "build:desktop": {
       "cache": true,
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "test": {
       "dependsOn": [
@@ -20,7 +22,10 @@
       ]
     },
     "typecheck": {
-      "cache": false
+      "cache": false,
+      "dependsOn": [
+        "^build"
+      ]
     }
   },
   "defaultBase": "master",
