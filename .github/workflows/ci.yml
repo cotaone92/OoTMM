@@ -35,7 +35,13 @@ jobs:
         run: |
           # The real object ID/offset are generated from the two ROMs.
           # CI has no ROM inputs, so inject compile-only placeholders into this checkout.
-          sed -i '$i\\#define CUSTOM_OBJECT_ID_DEKU_LINK 0x7fff\\n#define CUSTOM_OBJECT_DEKU_LINK_0 0x6000000' packages/generator/include/combo/custom.h
+          header=packages/generator/include/combo/custom.h
+          sed -i '$d' "$header"
+          cat >> "$header" <<'EOF'
+          #define CUSTOM_OBJECT_ID_DEKU_LINK 0x7fff
+          #define CUSTOM_OBJECT_DEKU_LINK_0 0x6000000
+          #endif
+          EOF
 
       - name: Typecheck
         run: pnpm typecheck
