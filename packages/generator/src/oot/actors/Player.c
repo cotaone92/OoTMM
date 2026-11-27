@@ -1087,9 +1087,13 @@ void Player_DrawFlexLod(PlayState* play, void** skeleton, Vec3s* jointTable, s32
                 dekuSkeleton = SEGMENTED_TO_VIRTUAL((u32)header->sh.segment);
                 if (dekuSkeleton)
                 {
-                    memset(sDekuJointTable, 0, sizeof(sDekuJointTable));
-                    sDekuJointTable[0] = jointTable[0];
-                    sDekuJointTable[1] = jointTable[1];
+                    /*
+                     * The Deku skeleton follows the shared Link limb order, but
+                     * has 21 real limbs (the OoT table's NONE entry is not a limb).
+                     * Preserve every matching joint instead of zeroing the pose.
+                     */
+                    memcpy(sDekuJointTable, jointTable,
+                           sizeof(Vec3s) * header->sh.limbCount);
                     SkelAnime_DrawFlexLod(play, dekuSkeleton, sDekuJointTable,
                                           header->dListCount, NULL, NULL,
                                           (Actor*)GET_PLAYER(play), lod);
