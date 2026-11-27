@@ -1159,6 +1159,10 @@ class CustomAssetsBuilder {
     await this.addObjectFile('MASK_ADULT_TRANSFORM_PLAYER', 'object_mask_adult.zobj', [0x0a000900,]);
     await this.addObjectFile('ADULT_MASK_EQUIPMENT', 'adult_mask_equipment_standalone.zobj', [0x0a000920,]);
 
+    /* Append Deku after every legacy object ID to preserve compatibility. */
+    const dekuLink = await customObjectsBuilder.buildDekuLink();
+    await this.addCustomObject(dekuLink.name, dekuLink.data, dekuLink.offsets);
+
     /* Add the object table */
     const objectTableBuffer = toU32Buffer(this.objectVroms.map(o => [o.vstart, o.vend]).flat());
     const objectTableVrom = this.addRawData(null, objectTableBuffer, true);
