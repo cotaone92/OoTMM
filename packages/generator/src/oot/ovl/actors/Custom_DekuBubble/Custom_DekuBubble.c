@@ -32,6 +32,7 @@ static void DekuBubble_Init(Actor* thisx, PlayState* play)
     if (charge > 30)
         charge = 30;
     this->timer = 99;
+    this->bounceCount = 0;
     this->expansion = charge * (0.01f / 1.0f);
     /* Gentle lift and drag give the projectile the floaty MM bubble trajectory. */
     this->actor.gravity = -0.015f;
@@ -69,7 +70,7 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
     /* A shield reflection reverses the flight; ordinary target contact pops it. */
     if (this->collider.base.atFlags & AT_HIT)
     {
-        if (this->collider.base.atFlags & AT_BOUNCED)
+        if ((this->collider.base.atFlags & AT_BOUNCED) && (this->bounceCount < 2))
         {
             this->actor.world.rot.y += 0x8000;
             this->actor.velocity.y = -this->actor.velocity.y;
