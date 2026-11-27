@@ -32,13 +32,18 @@ static void DekuBubble_Init(Actor* thisx, PlayState* play)
     if (charge > 30)
         charge = 30;
     this->timer = 99;
-    this->alpha = 220;
+    this->expansion = charge * (0.01f / 1.0f);
     this->actor.gravity = 0.0f;
     this->actor.speed = 8.0f + (charge * 0.18f);
-    Actor_SetScale(&this->actor, 0.0045f + (charge * 0.00005f));
+    /* The native OoT bubble mesh is authored at unit scale. */
+    Actor_SetScale(&this->actor, 1.0f);
 
     Collider_InitCylinder(play, &this->collider);
     Collider_SetCylinder(play, &this->collider, &this->actor, &sColliderInit);
+    /* Match the collision volume to the charged visual bubble. */
+    this->collider.dim.radius = (s16)(16.0f * (1.0f + this->expansion));
+    this->collider.dim.height = (s16)(32.0f * (1.0f + this->expansion));
+    this->collider.dim.yShift = (s16)(-16.0f * (1.0f + this->expansion));
 }
 
 static void DekuBubble_Destroy(Actor* thisx, PlayState* play)
@@ -92,7 +97,7 @@ static void DekuBubble_Draw(Actor* thisx, PlayState* play)
         MTXMODE_NEW
     );
     Matrix_ReplaceRotation(&play->billboardMtxF);
-    Matrix_Scale(this->actor.scale.x, this->actor.scale.y, this->actor.scale.z, MTXMODE_APPLY);
+    Matrix_Scale(1.0f + this->expansion, 1.0f + this->expansion, 1.0f, MTXMODE_APPLY);
     Matrix_RotateZ(DEG_TO_RAD((f32)(99 - this->timer) * 2.0f), MTXMODE_APPLY);
     gSPMatrix(POLY_XLU_DISP++, Matrix_Finalize(play->state.gfxCtx),
               G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
