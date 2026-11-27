@@ -1,4 +1,5 @@
 #include <combo.h>
+#include <combo/magic.h>
 #include <combo/dungeon.h>
 #include <combo/custom.h>
 #include <combo/player.h>
@@ -32,6 +33,7 @@ typedef void (*LinkAnimation_PlayLoopSetSpeed_t)(
 #define OOT_EX_OBJECT_SLOTS_TOTAL 128
 #define OOT_PLAYER_FORM_HUMAN 0
 #define OOT_PLAYER_FORM_DEKU  1
+#define DEKU_BUBBLE_MAGIC_COST 1
 
 void ArrowCycle_Handle(Player* link, PlayState* play);
 void Ocarina_HandleCustomSongs(Player* link, PlayState* play);
@@ -812,17 +814,18 @@ void Player_ProcessItemButtonsWrapper(Player* link, PlayState* play)
                 x, y, z, 0, link->actor.shape.rot.y, 0, sDekuBubbleCharge
             );
 
-            /* Clear the charge only after the projectile actor was allocated. */
+            /*
+             * Request magic only after the projectile exists. If the meter
+             * rejects the request (not acquired, insufficient, or busy),
+             * remove the projectile so no free shot is produced.
+             */
             if (bubble)
             {
-                sDekuBubbleCharge = 0;
-                sDekuBubbleCharging = 0;
+                if (!Magic_RequestChangeCustom(play, DEKU_BUBBLE_MAGIC_COST, MAGIC_CONSUME_NOW))
+                    Actor_Kill(bubble);
             }
-            else
-            {
-                sDekuBubbleCharge = 0;
-                sDekuBubbleCharging = 0;
-            }
+            sDekuBubbleCharge = 0;
+            sDekuBubbleCharging = 0;
 #ifdef COMBO_IMPORTED_ANIM_GPLAYERANIM_PN_TAMAHAKI_FRAMECOUNT
             sDekuWasCharging = 0;
 #endif
