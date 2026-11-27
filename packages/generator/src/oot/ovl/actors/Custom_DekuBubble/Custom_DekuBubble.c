@@ -57,8 +57,16 @@ static void DekuBubble_Destroy(Actor* thisx, PlayState* play)
 
 static void DekuBubble_Pop(DekuBubble* this, PlayState* play)
 {
-    /* OoT-native burst particles and impact sound at the actual contact point. */
-    EffectSsStone1_Spawn(play, &this->actor.world.pos, false);
+    /* OoT-native dust burst and impact sound at the actual contact point. */
+    {
+        Vec3f velocity = { 0.0f, 0.5f, 0.0f };
+        Vec3f accel = { 0.0f, 0.02f, 0.0f };
+        Color_RGBA8 primColor = { 180, 220, 255, 255 };
+        Color_RGBA8 envColor = { 80, 120, 180, 255 };
+
+        EffectSsDust_Spawn(play, 0, &this->actor.world.pos, &velocity, &accel,
+                           &primColor, &envColor, 100, 0, 8, 0);
+    }
     SfxSource_PlaySfxAtFixedWorldPos(play, &this->actor.world.pos, 20, NA_SE_IT_DEKU);
     Actor_Kill(&this->actor);
 }
@@ -90,7 +98,9 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
         {
             if (this->collider.elem.atHitElem != NULL && (this->collider.elem.atHitElem->acElemFlags & ACELEM_HIT))
             {
-                this->actor.world.pos = this->collider.elem.atHitElem->acDmgInfo.hitPos;
+                this->actor.world.pos.x = (f32)this->collider.elem.atHitElem->acDmgInfo.hitPos.x;
+                this->actor.world.pos.y = (f32)this->collider.elem.atHitElem->acDmgInfo.hitPos.y;
+                this->actor.world.pos.z = (f32)this->collider.elem.atHitElem->acDmgInfo.hitPos.z;
             }
             DekuBubble_Pop(this, play);
             return;
