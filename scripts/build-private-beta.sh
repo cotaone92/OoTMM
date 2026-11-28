@@ -86,5 +86,24 @@ pnpm nx run @ootmm/generator:build
 echo "Generating private beta ROM (seed: $SEED)..."
 pnpm --filter @ootmm/generator exec tsx ./lib/cli.ts --seed "$SEED"
 
-echo "Generation finished. Check $ROOT/out for the .z64 output."
+shopt -s nullglob
+OUTPUT_ROMS=("$ROOT"/out/*.z64)
+if [[ ${#OUTPUT_ROMS[@]} -eq 0 ]]; then
+  echo "Generator finished without producing a .z64 ROM in $ROOT/out." >&2
+  exit 1
+fi
+for output in "${OUTPUT_ROMS[@]}"; do
+  if [[ ! -s "$output" ]]; then
+    echo "Generated ROM is empty: $output" >&2
+    exit 1
+  fi
+  MAGIC="$(od -An -tx1 -N4 "$output" | tr -d ' \n')"
+  if [[ "$MAGIC" != "80371240" ]]; then
+    echo "Generated file does not have the expected big-endian N64 .z64 header: $output (magic: $MAGIC)" >&2
+    exit 1
+  fi
+  echo "Validated N64 ROM: $output ($(stat -c%s "$output") bytes)"
+done
+
+echo "Generation and basic ROM validation finished. Check $ROOT/out."
 echo "The temporary ROM copies in roms/ will now be removed."
