@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Build a private OoTMM beta from user-supplied ROM paths.
-# ROMs are copied only into the ignored/local roms/ workspace and removed on exit.
+# ROMs are copied only into the local roms/ workspace and removed on exit.
 if [[ $# -lt 2 || $# -gt 3 ]]; then
   echo "Usage: $0 /path/to/oot.z64 /path/to/mm.z64 [seed]" >&2
   exit 2
@@ -11,7 +11,8 @@ fi
 ROOT="$(git rev-parse --show-toplevel)"
 OOT_INPUT="$(realpath "$1")"
 MM_INPUT="$(realpath "$2")"
-SEED="${3:-DEKU-BETA-001}"
+SEED="DEKU-BETA-001"
+if [[ $# -eq 3 ]]; then SEED="$3"; fi
 OOT_LOCAL="$ROOT/roms/oot.z64"
 MM_LOCAL="$ROOT/roms/mm.z64"
 
@@ -26,17 +27,21 @@ for file in "$OOT_INPUT" "$MM_INPUT"; do
     exit 1
   fi
   if [[ "$(stat -c%s "$file")" -ne 33554432 ]]; then
-    echo "Expected a 32 MiB big-endian .z64 ROM: $file" >&2
+    echo "Expected a 32 MiB .z64 ROM: $file" >&2
     exit 1
   fi
 done
 
 mkdir -p "$ROOT/roms"
+if [[ -e "$OOT_LOCAL" || -e "$MM_LOCAL" ]]; then
+  echo "Refusing to overwrite existing files in $ROOT/roms. Move them aside first." >&2
+  exit 1
+fi
 cp "$OOT_INPUT" "$OOT_LOCAL"
 cp "$MM_INPUT" "$MM_LOCAL"
 
 cd "$ROOT"
-node --input-type=module - "$OOT_LOCAL" "$MM_LOCAL" <<'NODE'
+pnpm --filter @ootmm/generator exec node --input-type=module - "$OOT_LOCAL" "$MM_LOCAL" <<'NODE'
 import fs from 'node:fs';
 import CRC32 from 'crc-32';
 
@@ -50,10 +55,10 @@ for (const [index, game] of ['oot', 'mm'].entries()) {
   const actual = CRC32.buf(data) >>> 0;
   const wanted = expected.get(game);
   if (actual !== wanted) {
-    console.error(`${game.toUpperCase()} ROM mismatch: expected 0x${wanted.toString(16)}, got 0x${actual.toString(16)}`);
+    console.error(game.toUpperCase() + ' ROM mismatch: expected 0x' + wanted.toString(16) + ', got 0x' + actual.toString(16));
     process.exit(1);
   }
-  console.log(`${game.toUpperCase()} ROM accepted (CRC32 0x${actual.toString(16)})`);
+  console.log(game.toUpperCase() + ' ROM accepted (CRC32 0x' + actual.toString(16) + ')');
 }
 NODE
 
@@ -61,7 +66,7 @@ echo "Building native assets with the supplied ROMs..."
 pnpm nx run @ootmm/generator:build
 
 echo "Generating private beta ROM (seed: $SEED)..."
-pnpm --filter @ootmm/generator start --seed "$SEED"
+pnpm --filter @ootmm/generator exec tsx ./lib/cli.ts --seed "$SEED"
 
 echo "Generation finished. Check $ROOT/out for the .z64 output."
 echo "The temporary ROM copies in roms/ will now be removed."
