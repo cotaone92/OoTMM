@@ -34,7 +34,7 @@ if [[ "$OOT_SHA" != "c916ab315fbe82a22169bff13d6b866e9fddc907461eb6b0a227b82acdf
   echo "OoT ROM SHA-256 mismatch: $OOT_SHA" >&2
   exit 1
 fi
-if [[ "$MM_SHA" != "efb1365b3ae362604514c0c1a2d11f5dc8688ba5be660a37debf5e3be43f2b" ]]; then
+if [[ "$MM_SHA" != "efb1365b3ae362604514c0f9a1a2d11f5dc8688ba5be660a37debf5e3be43f2b" ]]; then
   echo "Majora's Mask ROM SHA-256 mismatch: $MM_SHA" >&2
   exit 1
 fi
