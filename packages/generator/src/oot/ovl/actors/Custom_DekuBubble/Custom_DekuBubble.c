@@ -75,6 +75,7 @@ static void DekuBubble_Pop(DekuBubble* this, PlayState* play)
 static void DekuBubble_Update(Actor* thisx, PlayState* play)
 {
     DekuBubble* this = THIS;
+    Vec3f startPos;
     Vec3f safePos;
     Vec3f targetPos;
     s32 step;
@@ -141,7 +142,8 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
      * Keep the last clear point so a detected contact never leaves the bubble
      * embedded in the surface.
      */
-    safePos = this->actor.world.pos;
+    startPos = this->actor.world.pos;
+    safePos = startPos;
     Actor_MoveXZGravity(&this->actor);
     targetPos = this->actor.world.pos;
 
@@ -149,9 +151,9 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
     {
         f32 t = step * 0.25f;
 
-        this->actor.world.pos.x = safePos.x + ((targetPos.x - safePos.x) * t);
-        this->actor.world.pos.y = safePos.y + ((targetPos.y - safePos.y) * t);
-        this->actor.world.pos.z = safePos.z + ((targetPos.z - safePos.z) * t);
+        this->actor.world.pos.x = startPos.x + ((targetPos.x - startPos.x) * t);
+        this->actor.world.pos.y = startPos.y + ((targetPos.y - startPos.y) * t);
+        this->actor.world.pos.z = startPos.z + ((targetPos.z - startPos.z) * t);
         this->actor.prevPos = safePos;
         Actor_UpdateBgCheckInfo(
             play,
