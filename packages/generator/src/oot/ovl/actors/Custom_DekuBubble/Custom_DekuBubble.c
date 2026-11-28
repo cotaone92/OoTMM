@@ -75,6 +75,10 @@ static void DekuBubble_Pop(DekuBubble* this, PlayState* play)
 static void DekuBubble_Update(Actor* thisx, PlayState* play)
 {
     DekuBubble* this = THIS;
+    Vec3f safePos;
+    Vec3f targetPos;
+    s32 step;
+    u32 surfaceHitFlags = 0;
 
     if (this->timer > 0)
         this->timer--;
@@ -131,17 +135,42 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
         }
     }
 
+    /*
+     * Sweep the bubble through short movement slices. A single end-position
+     * background check can miss thin walls or ledges at projectile speed.
+     * Keep the last clear point so a detected contact never leaves the bubble
+     * embedded in the surface.
+     */
+    safePos = this->actor.world.pos;
     Actor_MoveXZGravity(&this->actor);
-    Actor_UpdateBgCheckInfo(
-        play,
-        &this->actor,
-        8.0f,
-        8.0f,
-        8.0f,
-        UPDBGCHECKINFO_FLAG_WALL | UPDBGCHECKINFO_FLAG_FLOOR | UPDBGCHECKINFO_FLAG_CEILING
-    );
+    targetPos = this->actor.world.pos;
 
-    if (this->actor.bgCheckFlags & (BGCHECKFLAG_WALL | BGCHECKFLAG_GROUND | BGCHECKFLAG_CEILING))
+    for (step = 1; step <= 4; step++)
+    {
+        f32 t = step * 0.25f;
+
+        this->actor.world.pos.x = safePos.x + ((targetPos.x - safePos.x) * t);
+        this->actor.world.pos.y = safePos.y + ((targetPos.y - safePos.y) * t);
+        this->actor.world.pos.z = safePos.z + ((targetPos.z - safePos.z) * t);
+        this->actor.prevPos = safePos;
+        Actor_UpdateBgCheckInfo(
+            play,
+            &this->actor,
+            8.0f,
+            8.0f,
+            8.0f,
+            UPDBGCHECKINFO_FLAG_WALL | UPDBGCHECKINFO_FLAG_FLOOR | UPDBGCHECKINFO_FLAG_CEILING
+        );
+
+        surfaceHitFlags = this->actor.bgCheckFlags &
+            (BGCHECKFLAG_WALL | BGCHECKFLAG_GROUND | BGCHECKFLAG_CEILING);
+        if (surfaceHitFlags != 0)
+            break;
+
+        safePos = this->actor.world.pos;
+    }
+
+    if (surfaceHitFlags != 0)
     {
         if (this->bounceCount >= 2)
         {
@@ -149,16 +178,17 @@ static void DekuBubble_Update(Actor* thisx, PlayState* play)
             return;
         }
 
-        /* Rebound from level geometry at reduced horizontal speed. */
-        this->actor.world.pos = this->actor.prevPos;
-        if (this->actor.bgCheckFlags & BGCHECKFLAG_WALL)
+        /* Rebound from the last verified clear point, not inside the surface. */
+        this->actor.world.pos = safePos;
+        this->actor.prevPos = safePos;
+        if (surfaceHitFlags & BGCHECKFLAG_WALL)
         {
             this->baseYaw += 0x8000;
             this->actor.world.rot.y = this->baseYaw;
         }
-        if (this->actor.bgCheckFlags & BGCHECKFLAG_GROUND)
+        if (surfaceHitFlags & BGCHECKFLAG_GROUND)
             this->actor.velocity.y = 3.0f;
-        else if (this->actor.bgCheckFlags & BGCHECKFLAG_CEILING)
+        else if (surfaceHitFlags & BGCHECKFLAG_CEILING)
             this->actor.velocity.y = -2.0f;
         this->actor.speed *= 0.75f;
         this->bounceCount++;
