@@ -23,6 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Validate private beta build helper syntax
+        run: bash -n scripts/build-private-beta.sh
+
       - name: Install repository dependencies
         uses: ./.github/actions/setup
 
